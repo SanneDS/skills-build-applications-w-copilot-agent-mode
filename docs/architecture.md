@@ -28,19 +28,14 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-Record your plan here before editing code.
-
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+1. Make the model fields required where the data contract expects them. Keep the existing seed upserts and team membership reconciliation.
+2. Keep HTTP behavior in the existing routes and services. Validate team input and preserve its members; validate activity input and its user/team references before saving. Award one point per minute and timestamp each new activity.
+3. Rank teams by summed points (zero for teams with no activities); break ties by team name. Select workouts matching the user's goal first, then the focus of their latest supported activity, and explain each match.
+4. Use the shared API client on each React page to render results, loading, empty, and error states. The workout page starts with the seeded demo email and lets the user look up another email.
 
 ## Test plan
 
-Record the commands you run and what each failure means.
+Run the data contract first, then the API contract. The frontend contract mocks API responses and can run independently. Finish with both builds.
 
 - Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
 - API command: `npm run test:api --prefix octofit-tracker/backend`

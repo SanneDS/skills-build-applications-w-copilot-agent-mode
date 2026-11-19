@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../src/App.js';
@@ -53,6 +54,26 @@ describe('OctoFit presentation contract', () => {
   it('requests workout suggestions for a specific user', async () => {
     renderRoute('/workouts');
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/\/api\/workouts\/suggestions\/mona(%40|@)example\.com$/)));
+  });
+
+  it('replaces the demo suggestions after submitting another email', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const suggestions = String(input).endsWith('/hubot%40example.com')
+        ? [{ title: 'Strength Circuit', reason: 'Build strength' }]
+        : [{ title: 'Intervals', reason: 'Build endurance' }];
+      return new Response(JSON.stringify({ suggestions }));
+    }));
+    renderRoute('/workouts');
+    expect(await screen.findByText('Intervals')).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    const email = screen.getByRole('textbox', { name: /user email/i });
+    await user.clear(email);
+    await user.type(email, 'hubot@example.com');
+    await user.click(screen.getByRole('button', { name: /find workouts/i }));
+
+    expect(await screen.findByText('Strength Circuit')).toBeInTheDocument();
+    expect(screen.queryByText('Intervals')).not.toBeInTheDocument();
   });
 
   for (const capability of capabilities) {
